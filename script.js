@@ -970,7 +970,7 @@ function render() {
   let h = `<div class="qhead"><span class="qnum">Question ${state.i + 1}</span><span class="qtopic">${card.topic}</span></div>`;
   h += `<div class="qbody">${card.html}</div><form id="qform" autocomplete="off" novalidate>`;
   card.fields.forEach((f, k) => {
-    if (f.pre) h += `<div class="qbody" style="margin-top:18px">${f.pre}</div>`;
+    if (f.pre) h += `<div class="qbody">${f.pre}</div>`;
     if (f.choices) {
       h += `<div class="field" role="group" aria-labelledby="l${k}"><label id="l${k}">${f.label}</label>
         <div class="opts" data-f="${k}" data-n="${f.pickN || 1}">${f.choices.map((c, i) => `<button type="button" class="opt" data-l="${'ABCDEF'[i]}" aria-pressed="false"><b>${'ABCDEF'[i]}</b><span>${c}</span></button>`).join('')}</div>
@@ -1081,13 +1081,14 @@ function finish() {
   $('#quiz').classList.add('hidden');
   $('#fill').style.width = '100%';
   $('#pLabel').textContent = 'All done!';
-  const color = pct >= 80 ? 'var(--good)' : pct >= 40 ? 'var(--accent)' : 'var(--bad)';
+  const color = pct >= 80 ? 'var(--good)' : pct >= 40 ? 'var(--text)' : 'var(--bad)';
   const review = state.log.map((l) => `<li><span class="${l.ok ? 'tick' : 'cross'}">${l.ok ? '✓' : '✗'}</span> Q${l.q} ${esc(l.topic)} — ${l.label}<br>
       <span class="muted">You: ${esc(l.given || '(blank)')}${l.ok ? '' : ` · Answer: ${esc(l.answer)}`}</span></li>`).join('');
   $('#end').innerHTML = `<div class="card">
       <h2 class="center">Results</h2>
-      <div class="score-ring" style="background: conic-gradient(${color} ${pct * 3.6}deg, var(--accent-soft) 0)"><span>${pct}%</span></div>
-      <p class="center muted">${state.marks} out of ${state.total} marks</p>
+      <div class="score-box"><div class="pct">${pct}%</div>
+        <div class="meter"><div style="width:${pct}%;background:${color}"></div></div>
+        <p class="muted">${state.marks} out of ${state.total} marks</p></div>
       <p class="verdict">${verdict(state.name, state.age, pct)}</p>
       <button class="btn primary" id="again">Try again (new numbers)</button>
       <button class="btn secondary" id="change">Change player</button>
@@ -1104,6 +1105,26 @@ function finish() {
 }
 
 $('#startForm').addEventListener('submit', start);
+
+/* Light / dark mode toggle (follows the device setting until the player chooses) */
+function currentTheme() {
+  const t = document.documentElement.dataset.theme;
+  if (t) return t;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+function syncThemeButton() {
+  const dark = currentTheme() === 'dark';
+  $('#themeToggle').textContent = dark ? 'Light mode' : 'Dark mode';
+  document.querySelector('meta[name="theme-color"]').content = dark ? '#3a3a3a' : '#f7f5f0';
+}
+$('#themeToggle').addEventListener('click', () => {
+  const next = currentTheme() === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('theme', next); } catch (e) { /* private mode */ }
+  syncThemeButton();
+});
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncThemeButton);
+syncThemeButton();
 
 // Expose for testing in the console
 window.__quiz = { numOK, multiOK, coordOK, exprOK, ineqOK, lettersOK, QUESTIONS };
