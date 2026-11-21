@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#4f46e5">
+  <title>GCSE Maths Mock Quiz</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app">
+    <!-- Start screen -->
+    <section id="start" class="screen">
+      <div class="card intro">
+        <div class="badge">Unit 2 · Higher · Non-calculator</div>
+        <h1>GCSE Maths Mock Quiz</h1>
+        <p class="muted">22 questions based on the WJEC GCSE Mathematics &amp; Numeracy sample paper. The numbers change every time you play. No calculators. We'll know.</p>
+        <form id="startForm" autocomplete="off" novalidate>
+          <label for="name">Your name</label>
+          <input id="name" name="name" type="text" maxlength="30" placeholder="e.g. Bob" required autocapitalize="words">
+          <label for="age">Your age</label>
+          <input id="age" name="age" type="number" inputmode="numeric" min="5" max="120" placeholder="e.g. 30" required>
+          <p id="startError" class="error" role="alert"></p>
+          <button type="submit" class="btn primary">Start the quiz</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Quiz screen -->
+    <section id="quiz" class="screen hidden">
+      <div id="card" class="card"></div>
+    </section>
+
+    <!-- End screen -->
+    <section id="end" class="screen hidden"></section>
+  </main>
+
+  <footer id="progress" class="hidden" aria-live="polite">
+    <div class="ptext"><span id="pLabel"></span><span id="pScore"></span></div>
+    <div class="bar"><div id="fill"></div></div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
