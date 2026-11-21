@@ -665,16 +665,15 @@ const QUESTIONS = [
       { h: `0.25<sup>${F(1, 2)}</sup>`, eq: false },
     ]);
     const L = 'ABCDEF';
-    const opts = (items) => `<div class="opts">${items.map((it, i) => `<div class="opt"><b>${L[i]}</b><span>${it.h}</span></div>`).join('')}</div>`;
     const want = (items) => items.map((it, i) => (it.eq ? L[i] : '')).join('');
     const wa = want(itemsA), wb = want(itemsB);
     return {
       topic: 'Number & indices',
-      html: `<p><b>(a)</b> When evaluated, which two of these calculations are equal?</p>${opts(itemsA)}`,
+      html: `<p><b>(a)</b> When evaluated, which two of these calculations are equal?</p>`,
       fields: [
-        { label: '(a) Which two are equal?', hint: 'Type the letters, e.g. A and C', check: (s) => lettersOK(s, wa), answer: `${wa[0]} and ${wa[1]}` },
+        { label: 'Tap the two that are equal', choices: itemsA.map((it) => it.h), pickN: 2, check: (s) => lettersOK(s, wa), answer: `${wa[0]} and ${wa[1]}` },
         { label: '(a) What are they both equal to?', check: (s) => numOK(s, a * b), answer: `${a * b}` },
-        { label: '(b) Which two of these numbers are equal?', pre: opts(itemsB), hint: 'Type the letters', check: (s) => lettersOK(s, wb), answer: `${wb[0]} and ${wb[1]}` },
+        { label: 'Tap the two that are equal', pre: '<p><b>(b)</b> Which two of the following numbers are equal?</p>', choices: itemsB.map((it) => it.h), pickN: 2, check: (s) => lettersOK(s, wb), answer: `${wb[0]} and ${wb[1]}` },
         { label: '(b) What are they both equal to?', check: (s) => numOK(s, 4), answer: '4' },
       ],
     };
@@ -966,6 +965,13 @@ function render() {
   h += `<div class="qbody">${card.html}</div><form id="qform" autocomplete="off" novalidate>`;
   card.fields.forEach((f, k) => {
     if (f.pre) h += `<div class="qbody" style="margin-top:18px">${f.pre}</div>`;
+    if (f.choices) {
+      h += `<div class="field" role="group" aria-labelledby="l${k}"><label id="l${k}">${f.label}</label>
+        <div class="opts" data-f="${k}" data-n="${f.pickN || 1}">${f.choices.map((c, i) => `<button type="button" class="opt" data-l="${'ABCDEF'[i]}" aria-pressed="false"><b>${'ABCDEF'[i]}</b><span>${c}</span></button>`).join('')}</div>
+        <input id="f${k}" type="hidden" value="">
+        <div class="feedback" id="fb${k}"></div></div>`;
+      return;
+    }
     h += `<div class="field"><label for="f${k}">${f.label}</label>
       <input id="f${k}" type="text" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="${k === card.fields.length - 1 ? 'done' : 'next'}">
       ${f.hint ? `<div class="hint">${f.hint}</div>` : ''}
@@ -975,7 +981,19 @@ function render() {
   h += `<button type="submit" class="btn primary" id="go">Check answer${card.fields.length > 1 ? 's' : ''}</button></form>`;
   const el = $('#card');
   el.innerHTML = h;
-  state.lastInput = $('#f0');
+  state.lastInput = el.querySelector('input[type=text]');
+  el.querySelectorAll('.opts[data-f]').forEach((grp) => {
+    const n = +grp.dataset.n, hidden = $('#f' + grp.dataset.f);
+    let sel = [];
+    grp.querySelectorAll('.opt').forEach((b) => b.addEventListener('click', () => {
+      if (state.checked) return;
+      const l = b.dataset.l;
+      if (sel.includes(l)) sel = sel.filter((x) => x !== l);
+      else { sel.push(l); if (sel.length > n) sel.shift(); }
+      grp.querySelectorAll('.opt').forEach((o) => o.setAttribute('aria-pressed', sel.includes(o.dataset.l)));
+      hidden.value = sel.slice().sort().join('');
+    }));
+  });
   el.querySelectorAll('input').forEach((inp) => inp.addEventListener('focus', () => { state.lastInput = inp; }));
   el.querySelectorAll('.keys button').forEach((b) => {
     b.addEventListener('pointerdown', (e) => e.preventDefault()); // keep the keyboard open
@@ -1004,7 +1022,7 @@ function onSubmit(e) {
   const card = state.cards[state.i];
   // "Enter" on a non-final empty field moves to the next field
   const active = document.activeElement;
-  const inputs = [...document.querySelectorAll('#qform input')];
+  const inputs = [...document.querySelectorAll('#qform input[type=text]')];
   const idx = inputs.indexOf(active);
   if (idx >= 0 && idx < inputs.length - 1 && inputs.some((i) => !i.value.trim())) {
     inputs[idx + 1].focus();
@@ -1015,7 +1033,16 @@ function onSubmit(e) {
     let ok = false;
     try { ok = !!f.check(inp.value); } catch (err) { ok = false; }
     if (ok) state.marks++;
-    state.log.push({ q: state.i + 1, topic: card.topic, label: f.label, given: inp.value, answer: f.answer, ok });
+    const given = f.choices ? inp.value.split('').join(' and ') : inp.value;
+    state.log.push({ q: state.i + 1, topic: card.topic, label: f.label, given, answer: f.answer, ok });
+    if (f.choices) {
+      document.querySelectorAll(`.opts[data-f="${k}"] .opt`).forEach((o) => {
+        const right = f.answer.includes(o.dataset.l), picked = inp.value.includes(o.dataset.l);
+        if (right) o.classList.add('right');
+        else if (picked) o.classList.add('wrongpick');
+        o.disabled = true;
+      });
+    }
     inp.classList.add(ok ? 'correct' : 'wrong');
     inp.disabled = true;
     fb.className = 'feedback ' + (ok ? 'good' : 'bad');

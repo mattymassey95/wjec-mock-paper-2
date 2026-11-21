@@ -234,6 +234,24 @@ sup { font-size: .7em; }
   gap: 10px;
   min-height: 52px;
 }
+button.opt {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color .15s, background .15s;
+}
+button.opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent-soft); }
+button.opt[aria-pressed="true"] b { background: var(--accent); color: #fff; }
+button.opt.right, button.opt.right[aria-pressed="true"] { border-color: var(--good); background: var(--good-soft); box-shadow: none; }
+button.opt.right b { background: var(--good); color: #fff; }
+button.opt.wrongpick, button.opt.wrongpick[aria-pressed="true"] { border-color: var(--bad); background: var(--bad-soft); box-shadow: none; }
+button.opt.wrongpick b { background: var(--bad); color: #fff; }
+.opt span { white-space: nowrap; }
+button.opt:disabled { cursor: default; opacity: 1; }
 .opt b {
   background: var(--accent-soft);
   color: var(--accent);
