@@ -25,8 +25,10 @@ const round = (x, d) => Math.round(x * 10 ** d) / 10 ** d;
 
 // HTML maths snippets
 const F = (n, d) => `<span class="frac"><span>${n}</span><span>${d}</span></span>`;
-const SQ = (x) => `√<span class="rad">${x}</span>`;
-const CB = (x) => `<span class="root-i">3</span>√<span class="rad">${x}</span>`;
+// Radical sign that stretches to the height of whatever is under it (e.g. a whole fraction)
+const RSIGN = '<svg class="rsign" viewBox="0 0 12 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0.5 25 L3.5 22.5 L7 39 L11.5 0.75 L12 0.75"/></svg>';
+const SQ = (x) => `<span class="radical">${RSIGN}<span class="rad">${x}</span></span>`;
+const CB = (x) => `<span class="radical"><span class="root-i">3</span>${RSIGN}<span class="rad">${x}</span></span>`;
 
 /* =========================================================
    Answer normalising + expression parsing
@@ -170,6 +172,7 @@ const UNIT_RE = /\s*(degrees?|deg|boxes|box|years?\s*old|years?|yrs?|oranges?|th
 function numOK(input, target, o = {}) {
   let s = norm(input).replace(/^[a-z]+\s*=\s*/, '').replace(UNIT_RE, '').replace(UNIT_RE, '').trim();
   if (!s) return false;
+  s = s.replace(/^(-?\d+),(\d+)$/, '$1.$2'); // decimal comma from some number pads
   let scale = 1;
   if (/%$/.test(s)) { scale = 100; s = s.slice(0, -1).trim(); }
   if (/[a-z]/.test(s.replace(/sqrt|cbrt|pi/g, ''))) return false;
@@ -485,7 +488,7 @@ const QUESTIONS = [
         </div>
         <p>The INPUT number is <b>${w}&nbsp;${F(rem / g, 8 / g)}</b>.</p>
         <p>What is the OUTPUT number? Give your answer as a mixed number.</p>`,
-      fields: [{ label: 'Output', hint: 'e.g. type a mixed number like 3 1/4', check: (s) => numOK(s, out), answer: `${m - 1} 7/8` }],
+      fields: [{ label: 'Output', num: false, hint: 'e.g. type a mixed number like 3 1/4', check: (s) => numOK(s, out), answer: `${m - 1} 7/8` }],
     };
   },
 
@@ -954,9 +957,12 @@ function newGame() {
   render();
 }
 
-const KEYS_NUM = ['−', '/', '(', ')', '.'];
+const KEYS_NUM = ['−', '/', '.'];
 const KEYS_ALG = ['−', '/', '(', ')', '^', '²', '³', '√', '∛'];
 const KEYS_INEQ = ['−', '/', '(', ')', '≤', '≥', '<', '>', '½'];
+
+// Single-number answers get the number pad (− and / are on the symbol buttons)
+const isNum = (f) => f.num ?? /numOK\(/.test(f.check.toString());
 
 function render() {
   const card = state.cards[state.i];
@@ -973,7 +979,7 @@ function render() {
       return;
     }
     h += `<div class="field"><label for="f${k}">${f.label}</label>
-      <input id="f${k}" type="text" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="${k === card.fields.length - 1 ? 'done' : 'next'}">
+      <input id="f${k}" type="text" inputmode="${isNum(f) ? 'decimal' : 'text'}" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="${k === card.fields.length - 1 ? 'done' : 'next'}">
       ${f.hint ? `<div class="hint">${f.hint}</div>` : ''}
       <div class="feedback" id="fb${k}"></div></div>`;
   });

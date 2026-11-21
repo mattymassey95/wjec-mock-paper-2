@@ -183,8 +183,12 @@ input.wrong { border-color: var(--bad); background: var(--bad-soft); }
 }
 .frac > span:first-child { border-bottom: 1.5px solid currentColor; padding: 0 3px; }
 .frac > span:last-child { padding: 0 3px; }
-.rad { border-top: 1.5px solid currentColor; padding: 0 2px; }
-.root-i { font-size: .65em; vertical-align: 1.0em; margin-right: -4px; }
+.radical { display: inline-flex; align-items: stretch; vertical-align: middle; position: relative; margin: 0 .12em; }
+.rsign { width: .6em; flex: none; overflow: visible; }
+.rsign path { fill: none; stroke: currentColor; stroke-width: 1.5px; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.rad { display: inline-block; border-top: 1.5px solid currentColor; padding: 2px 3px 0; }
+.root-i { position: absolute; left: -0.15em; top: 15%; font-size: .55em; line-height: 1; }
+.radical:has(.root-i) { margin-left: .3em; }
 sup { font-size: .7em; }
 .rec { position: relative; display: inline-block; }
 .rec::after {
